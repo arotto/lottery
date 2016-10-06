@@ -3,8 +3,6 @@ from numpy import *
 from pylab import *
 from scipy.stats import zscore, pearsonr, linregress, scoreatpercentile
 from pandas import DataFrame, date_range, Series, datetools, tseries, rolling_mean, rolling_std, ols, concat, HDFStore, merge, read_csv, read_pickle
-from pandas.io.data import get_data_yahoo
-#import statsmodels.api as sm
 import urllib2, csv, re, cPickle, calendar, time
 from datetime import datetime
 import statsmodels.api as sm
