@@ -113,17 +113,12 @@ for year in [2011, 2012]:
 
     year_demographics = merge(zip_ed_df, year_demographics, on='ZIP')
     year_demographics.index = map(int, year_demographics.ZIP)
-
     year_demographics['education'] = (2.5*year_demographics['n4'] + 5.5*year_demographics['5+6'] + 7.5*year_demographics['7+8'] + 9*year_demographics['9'] + 10*year_demographics['10'] + 11*year_demographics['11'] + 12*year_demographics['12'] + 12*year_demographics['hs'] +13*year_demographics['sc1'] + 13*year_demographics['sc2'] +  14*year_demographics['aa'] + 16*year_demographics['ba'] + 18*year_demographics['ma'] + 18*year_demographics['pro'] + 18*year_demographics['phd']) 
-
     year_demographics['z_education'] = zscore(year_demographics['education'])
-
     year_demographics['ses'] = year_demographics['z_mbsa_workforce'] + year_demographics['z_income'] + year_demographics['z_education']
-
     year_demographics['desc'] = Series(repeat(0, shape(year_demographics)[0]), index=year_demographics.index)
     for zip in year_demographics.ZIP: 
         year_demographics.loc[year_demographics.ZIP==zip,'desc']= zip_locs.ix[int(zip)][0] + ':' + zip_locs.ix[int(zip)][1]
-
     year_demographics['year'] = repeat(year, shape(year_demographics)[0])
 
     if(len(demographics.columns)==0):
