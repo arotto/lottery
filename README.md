@@ -15,7 +15,7 @@ Field codes for the American Community Survey (ACS5) queries used by load_demogr
 Zoning data require the NYC PLUTO dataset 11v1
 https://www1.nyc.gov/site/planning/data-maps/open-data/pluto-mappluto-archive.page
 
-The remaining raw data is made available here:
+The remaining raw data are made available here:
 https://osf.io/fc463/files/
 
 
