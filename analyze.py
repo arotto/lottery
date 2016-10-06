@@ -17,39 +17,16 @@ DATE_RANGES = {2011:  date_range(datetime(2011, 1, 1), datetime(2011, 12,31)),
                'BOTH': date_range(datetime(2011, 1, 1), datetime(2012, 12,31))}
 ANALYSIS_YEAR = 2012
 analysis_range = DATE_RANGES[ANALYSIS_YEAR]
-NUM_PE_BINS = 5
 SPORTS_ALPHA = 0.1
 WEATHER_ALPHA = 0.1
 OTHER_CITY_LIST = OTHER_CITY_LIST = ['dallas', 'chicago', 'la',  'philadelphia', 'boston', 'sfbay']
-# FOR EXISTING PLOTS ['dallas', 'chicago', 'detroit', 'la', 'denver', 'dc',  'philadelphia', 'boston']
-# 'miami', 'phoenix', 'minneapolis']
-#['dallas', 'chicago', 'detroit', 'la', 'denver', 'dc', 'philadelphia', 'boston', 'sfbay']
 
-#lott = DataFrame.from_csv('data/2011_lottery.csv', index_col='SalesDate')
-lott_2011 = read_pickle('data/2011_lottery.dat') #read_pickle(open('data/2011_lottery.dat')
-lott_2012 = read_pickle('data/2012_lottery.dat')
-if(ANALYSIS_YEAR == 'BOTH'):    lott = concat([lott_2011, lott_2012])
-else: lott = eval('lott_'+str(ANALYSIS_YEAR))
+lott = DataFrame.from_csv('data/'+str(ANALYSIS_YEAR)+'_lottery_sales.csv', index_col='SalesDate')
 
 all_zips = lott.ZIP.unique()
 
 demographics = read_pickle('data/demographics.dat')
 demographics['z_ses'] = zscore(demographics.ses)
-
-jackpot = DataFrame({'date':analysis_range})
-jackpot.index = jackpot.date
-
-powerball = DataFrame.from_csv('data/'+str(ANALYSIS_YEAR) + '_powerball_jackpot.csv')
-powerball['date'] = powerball.index
-powerball = powerball.sort_index()
-powerball = powerball.reindex(analysis_range)
-jackpot['powerball'] = powerball['Amount'].fillna(method='backfill')
-
-megamillion = DataFrame.from_csv('data/'+str(ANALYSIS_YEAR) + '_megamillion_jackpot.csv')
-megamillion['date'] = megamillion.index
-megamillion = megamillion.sort_index()
-megamillion = megamillion.reindex(analysis_range)
-jackpot['megamillion'] = megamillion['JackpotAmount'].fillna(method='backfill')
 
 zoning = read_pickle('data/zoning.dat')
 sports = read_pickle('data/sports/sports_'+str(ANALYSIS_YEAR)+'_alpha_'+str(SPORTS_ALPHA)+'.dat')
@@ -87,9 +64,6 @@ solar['dni'] = solar['DNI (W/m^2))']
 ghi = solar[solar.ghi != 0].groupby('date').mean()['ghi'].dropna()
 dni = solar[logical_and(~isnan(solar.dni), solar.dni != 0)].groupby('date').mean()['dni']
 
-# dni = solar[logical_and(logical_and(solar.dni !=0, ~isnan(solar.dni)),
-#                         logical_and( solar.time >= 8, solar.time <= 16))].groupby('date').mean()['dni']
-
 solar_df = DataFrame({'ghi':ghi[logical_and(ghi.index >= analysis_range[0], ghi.index <= analysis_range[-1])],
                       'dni':dni[logical_and(dni.index >= analysis_range[0], dni.index <= analysis_range[-1])], 
                       'temp':weather.MeanTemperatureF[logical_and(weather.index >= analysis_range[0],
@@ -98,42 +72,22 @@ solar_df = DataFrame({'ghi':ghi[logical_and(ghi.index >= analysis_range[0], ghi.
 for month in range(12):
     solar_df[datetools.MONTHS[month]] = map(int, (solar_df.index.month-1) == month)
 
-
-ghi_solar_regress_obj = smf.ols(formula = 'ghi ~ 1 + temp', data=solar_df)
-ghi_solar_res = ghi_solar_regress_obj.fit()
-dni_solar_regress_obj = dni_solar_regress_obj = smf.ols(formula = 'dni ~ 1 + ' + '+'.join(datetools.MONTHS),data=solar_df) #smf.ols(formula = 'dni ~ 1 + temp', data=solar_df) 
-dni_solar_res = dni_solar_regress_obj.fit()
 irradiance = DataFrame(index = analysis_range)
 irradiance['dni'] = solar_df.dni
 irradiance['ghi'] = solar_df.ghi
-irradiance['resid_ghi'] = (ghi_solar_res.resid)
-irradiance['resid_dni'] = (dni_solar_res.resid)
-irradiance['z_resid_ghi'] = pd_zscore(ghi_solar_res.resid)
-irradiance['z_resid_dni'] = pd_zscore(dni_solar_res.resid)
 
 irradiance['ghi_exp_avg'] = Series(index=irradiance.index) 
 irradiance['ghi_pe'] = Series(index=irradiance.index) 
-irradiance['resid_ghi_exp_avg'] = Series(index=irradiance.index) 
-irradiance['resid_ghi_pe'] = Series(index=irradiance.index) 
 irradiance['dni_exp_avg'] = Series(index=irradiance.index) 
 irradiance['dni_pe'] = Series(index=irradiance.index) 
-irradiance['resid_dni_exp_avg'] = Series(index=irradiance.index) 
-irradiance['resid_dni_pe'] = Series(index=irradiance.index) 
 
 avg_ghi = mean(irradiance['ghi'])
-avg_resid_ghi = mean(irradiance['resid_ghi'])
 avg_dni = mean(irradiance['dni'])
-avg_resid_dni = mean(irradiance['resid_dni'])
 for date in irradiance.index[1:]:
     pe = (irradiance.ix[date]['ghi'] - avg_ghi)
     avg_ghi += WEATHER_ALPHA*pe
     irradiance.set_value(date, 'ghi_exp_avg', avg_ghi)
     irradiance.set_value(date, 'ghi_pe', pe)
-
-    resid_pe = (irradiance.ix[date]['resid_ghi'] - avg_resid_ghi)
-    avg_resid_ghi += WEATHER_ALPHA*resid_pe
-    irradiance.set_value(date, 'resid_ghi_exp_avg', avg_resid_ghi)
-    irradiance.set_value(date, 'resid_ghi_pe', pe)
 
     if(not isnan(irradiance.ix[date]['dni'])):
         dni_pe = (irradiance.ix[date]['dni'] - avg_dni)
@@ -144,18 +98,7 @@ for date in irradiance.index[1:]:
         irradiance.set_value(date, 'dni_exp_avg', avg_dni)
         irradiance.set_value(date, 'dni_pe', nan)
 
-    if(not isnan(irradiance.ix[date]['resid_dni'])):
-        resid_dni_pe = (irradiance.ix[date]['resid_dni'] - avg_resid_dni)
-        avg_resid_dni += WEATHER_ALPHA*resid_dni_pe
-        irradiance.set_value(date, 'resid_dni_exp_avg', avg_resid_dni)
-        irradiance.set_value(date, 'resid_dni_pe', resid_dni_pe)
-    else:
-        irradiance.set_value(date, 'resid_dni_exp_avg', avg_resid_dni)
-        irradiance.set_value(date, 'resid_dni_pe', nan)
-
-
 irradiance.to_pickle('data/weather/irradiance_'+str(ANALYSIS_YEAR)+'_alpha_'+str(WEATHER_ALPHA)+'.dat')
-
 
 other_irradiance = {}
 for other_city in OTHER_CITY_LIST:
@@ -181,15 +124,9 @@ for other_city in OTHER_CITY_LIST:
     other_dni_solar_regress_obj = smf.ols(formula = 'dni ~ 1 + temp', data=other_solar_df) 
     other_dni_solar_res = other_dni_solar_regress_obj.fit()
 
-    other_irradiance[other_city] = DataFrame({'resid_dni':other_dni_solar_res.resid, 'resid_ghi':other_ghi_solar_res.resid,
-                                              'z_resid_dni':pd_zscore(other_dni_solar_res.resid),
-                                              'z_resid_ghi':pd_zscore(other_ghi_solar_res.resid),
-                                              'dni':other_solar_df.dni, 'ghi':other_solar_df.ghi})
-
     other_irradiance[other_city]['dni_exp_avg'] = Series(index=other_irradiance[other_city].index) 
     other_irradiance[other_city]['dni_pe'] = Series(index=other_irradiance[other_city].index) 
     avg_dni = mean(other_irradiance[other_city]['dni'])
-    avg_resid_dni = mean(other_irradiance[other_city]['resid_dni'])
     for date in other_irradiance[other_city].index[1:]:    
         if(not isnan(other_irradiance[other_city].ix[date]['dni'])):
             dni_pe = (other_irradiance[other_city].ix[date]['dni'] - avg_dni)
@@ -202,25 +139,17 @@ for other_city in OTHER_CITY_LIST:
 
 all_other_ghi = Series(index=analysis_range, data= zeros(len(analysis_range)))
 all_other_dni = Series(index=analysis_range, data= zeros(len(analysis_range)))
-all_other_resid_ghi = Series(index=analysis_range, data= zeros(len(analysis_range)))
-all_other_resid_dni = Series(index=analysis_range, data= zeros(len(analysis_range)))
 for other_city in OTHER_CITY_LIST:
     if(other_city in ['boston', 'philadelphia']): continue
     all_other_ghi += other_irradiance[other_city]['ghi']
     all_other_dni += other_irradiance[other_city]['dni']
-    all_other_resid_ghi += other_irradiance[other_city]['resid_ghi']
-    all_other_resid_dni += other_irradiance[other_city]['resid_dni']
 
 all_other_ghi = all_other_ghi / (len(OTHER_CITY_LIST)-2)
 all_other_dni = all_other_dni / (len(OTHER_CITY_LIST)-2)
-all_other_resid_ghi = all_other_resid_ghi / (len(OTHER_CITY_LIST)-2)
-all_other_resid_dni = all_other_resid_dni / (len(OTHER_CITY_LIST)-2)
 
 
 
-other_irradiance['all'] = DataFrame({'resid_ghi':Series(all_other_resid_ghi, index=analysis_range),'resid_dni':Series(all_other_resid_dni,index=analysis_range),
-                                     'z_resid_ghi':zscore(all_other_resid_ghi),'z_resid_dni':zscore(all_other_resid_dni),
-                                     'dni':all_other_dni, 'ghi':all_other_ghi})
+other_irradiance['all'] = DataFrame({'dni':all_other_dni, 'ghi':all_other_ghi})
 
 demographics = merge(demographics, zoning, on='ZIP')
 demographics.index = demographics.ZIP.astype(int)
@@ -357,10 +286,7 @@ for zip, zip_lott in grouped:
     zip_df['streak_composite_lag_0'] = sports.sum_streak #(rolling_mean(sports.sum_streak, 5))
     zip_df['sports_sum_pe'] = pd_zscore(sports.sum_pe.shift(1))
     zip_df['sports_sum_pe_with_na'] = pd_zscore(sports.sum_pe_with_na.shift(1))
-    zip_df['resid_ghi'] = pd_zscore(irradiance.resid_ghi)
-    zip_df['resid_ghi_pe'] = pd_zscore(irradiance.resid_ghi_pe)
     zip_df['ghi_pe'] = pd_zscore(irradiance.ghi_pe)
-    zip_df['resid_dni'] = pd_zscore(irradiance.resid_dni)
     zip_df['dni_pe'] = pd_zscore(irradiance.dni_pe)
 
     if(ANALYSIS_YEAR == 2011): teams = ['rangers', 'rangers','knicks', 'mets', 'yankees', 'giants', 'jets']
@@ -376,10 +302,6 @@ for zip, zip_lott in grouped:
         zip_df[ {True: 'all_other', 
                  False:other_city}[other_city=='all'] +'_sum_pe_with_na'] = pd_zscore(other_sports[other_city].sum_pe_with_na.shift(1)).copy()
         if(other_city in ['boston', 'philadelphia']): continue
-        zip_df[ {True: 'all_other', 
-                 False:other_city}[other_city=='all'] +'_resid_ghi'] = pd_zscore(other_irradiance[other_city].resid_ghi).copy()
-        zip_df[ {True: 'all_other', 
-                 False:other_city}[other_city=='all'] +'_resid_dni'] = pd_zscore(other_irradiance[other_city].resid_dni).copy()
         if(other_city != 'all'):
             zip_df[other_city+'_dni_pe'] = pd_zscore(other_irradiance[other_city].dni_pe).copy()
         
