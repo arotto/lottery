@@ -8,7 +8,14 @@ These scripts constitute the main data analysis pipeline for the project reporte
 
 Otto, A. R., Fleming, S.M., & Glimcher, P.W. (in press). Unexpected but Incidental Positive Outcomes Predict Real-World Gambling. Psychological Science.
 
-Raw data available at:
+More documentation coming. 
+
+Field codes for the American Community Survey (ACS5) queries used by load_demographics.py are located in data/acs5_codes.txt (see details in Methods)
+
+Zoning data require the NYC PLUTO dataset 11v1
+https://www1.nyc.gov/site/planning/data-maps/open-data/pluto-mappluto-archive.page
+
+The remaining raw data is made available here:
 https://osf.io/fc463/files/
 
 
