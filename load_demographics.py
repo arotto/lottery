@@ -6,11 +6,13 @@ from scipy.stats import zscore
 import sys, cPickle,os
 import random, urllib2
 
+API_KEY = '' #you will need your own  Census API key to make queries
+
 def extractListFromURL(data_source, variable, year):
     if(data_source=='sf1'):
-        url = 'http://api.census.gov/data/2010/sf1?key=2ce6c596b79f689bd990b6213d1ed4aacbba3f75&get=' + variable + '&in=state:36&for=zip+code+tabulation+area'
+        url = 'http://api.census.gov/data/2010/sf1?key=' + API_KEY + '&get=' + variable + '&in=state:36&for=zip+code+tabulation+area'
     elif(data_source=='acs5'):
-        url = 'http://api.census.gov/data/'+str(year)+ '/acs5?key=2ce6c596b79f689bd990b6213d1ed4aacbba3f75&get=' + variable + '&for=zip+code+tabulation+area:*'
+        url = 'http://api.census.gov/data/'+str(year)+ '/acs5?' + API_KEY + '&get=' + variable + '&for=zip+code+tabulation+area:*'
 
     response = urllib2.urlopen(url)
     resp_text = response.read().split('\n') 
