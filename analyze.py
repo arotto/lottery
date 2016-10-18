@@ -11,8 +11,7 @@ import statsmodels.formula.api as smf
 def pd_zscore(x): return (x - mean(x)) / std(x)
 
 DATE_RANGES = {2011:  date_range(datetime(2011, 1, 1), datetime(2011, 12,31)),
-               2012: date_range(datetime(2012, 1, 1), datetime(2012, 12,31)),
-               'BOTH': date_range(datetime(2011, 1, 1), datetime(2012, 12,31))}
+               2012: date_range(datetime(2012, 1, 1), datetime(2012, 12,31))}
 ANALYSIS_YEAR = 2012
 analysis_range = DATE_RANGES[ANALYSIS_YEAR]
 SPORTS_ALPHA = 0.1
@@ -336,19 +335,10 @@ f_out = gzip.open('regress/regress_input_'+str(ANALYSIS_YEAR)+'.csv.gz', 'wb')
 f_out.writelines(f_in)
 f_out.close()
 f_in.close()
-os.system('rm regress/regress_input_'+str(ANALYSIS_YEAR)+'.csv')
 
-os.system('scp -P 757 regress/regress_input_'+str(ANALYSIS_YEAR)+'.csv.gz rotto@impatience.cns.nyu.edu:~/dawlab/lottery/regress/')
+mean_lott = lott.groupby('date').aggregate(mean)
+figure()
+mean_lott.composite_per_capita.plot()
+show()
 
-
-mean_lott = lott.groupby(lambda x:x.date).aggregate(mean)
-mean_lott.index = analysis_range
-'''
-mean_lott['composite'] = (mean_lott['Take5'] + mean_lott['Win4Day'] + mean_lott['Win4Eve'] +mean_lott['QuickDraw'] + mean_lott['Pick10'] +  mean_lott['NumbersDay'] + mean_lott['NumbersEve'] )
-#mean_lott = mean_lott.drop(['Lotto', 'MegaMillions', 'Megaplier', 'SweetMillion', 'PowerBall', 'PowerPlay'],1)
-mean_lott['sports_composite'] = sports.sum_wins
-for day, regressor in days_of_week_regressors.iteritems():   mean_lott[day] = regressor
-for day, regressor in payday_regressors.iteritems():    mean_lott[day] = regressor
-mean_lott['HOLIDAYS'] = holiday_regressor
-'''
 
