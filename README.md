@@ -4,7 +4,7 @@ NYC Lottery Data Analysis Scripts
 by Ross Otto
 rotto@psych.mcgill.ca
 
-These scripts constitute the main data analysis pipeline for the project reported in the paper:
+These scripts constitute the main data analysis pipeline for the study reported in the paper:
 
 Otto, A. R., Fleming, S. M., & Glimcher, P. W. (2016). Unexpected but Incidental Positive Outcomes Predict Real-World Gambling. Psychological Science, 27(3), 299–311. https://doi.org/10.1177/0956797615618366
 
@@ -17,5 +17,5 @@ https://www1.nyc.gov/site/planning/data-maps/open-data/pluto-mappluto-archive.pa
 
 The remaining raw data (NYC lottery purchasing, satellite-derived solar irradiance estimates) are available here at https://osf.io/fc463/files/
 
-More documentation coming. 
+
 
